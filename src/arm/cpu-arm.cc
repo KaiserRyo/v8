@@ -26,7 +26,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // CPU specific code for arm independent of OS goes here.
-#ifdef __arm__
+#if defined(__arm__) && !defined(__QNXNTO__)
 #include <sys/syscall.h>  // for cache flushing.
 #endif
 
@@ -37,6 +37,10 @@
 #include "cpu.h"
 #include "macro-assembler.h"
 #include "simulator.h"  // for cache flushing.
+
+#if defined(__arm__) && defined(__QNXNTO__)
+#include <sys/mman.h>  // for cache flushing.
+#endif
 
 namespace v8 {
 namespace internal {
@@ -64,6 +68,8 @@ void CPU::FlushICache(void* start, size_t size) {
   // None of this code ends up in the snapshot so there are no issues
   // around whether or not to generate the code when building snapshots.
   Simulator::FlushICache(Isolate::Current()->simulator_i_cache(), start, size);
+#elif defined(__QNXNTO__)
+  msync(start, size, MS_SYNC|MS_INVALIDATE_ICACHE);
 #else
   // Ideally, we would call
   //   syscall(__ARM_NR_cacheflush, start,

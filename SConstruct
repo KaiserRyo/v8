@@ -105,6 +105,11 @@ LIBRARY_FLAGS = {
         'LIBS': ['pthread']
       }
     },
+    'os:qnx': {
+      'library:shared': {
+        'CPPDEFINES': ['V8_SHARED']
+      }
+    },
     'os:macos': {
       'CCFLAGS':      ['-ansi', '-mmacosx-version-min=10.4'],
       'library:shared': {
@@ -353,6 +358,9 @@ MKSNAPSHOT_EXTRA_FLAGS = {
     'os:linux': {
       'LIBS': ['pthread'],
     },
+    'os:qnx': {
+      'LIBS': ['m', 'socket'],
+    },
     'os:macos': {
       'LIBS': ['pthread'],
     },
@@ -420,6 +428,9 @@ CCTEST_EXTRA_FLAGS = {
       'LIBS':         ['pthread'],
       'CCFLAGS':      ['-Wno-unused-but-set-variable'],
     },
+    'os:qnx': {
+      'LIBS': ['m', 'socket'],
+    },
     'os:macos': {
       'LIBS':         ['pthread'],
     },
@@ -474,7 +485,10 @@ SAMPLE_FLAGS = {
       'LINKFLAGS':    ['$CCFLAGS'],
     },
     'os:linux': {
-      'LIBS':         ['pthread'],
+      'LIBS': ['pthread'],
+    },
+    'os:qnx': {
+      'LIBS': ['m', 'socket'],
     },
     'os:macos': {
       'LIBS':         ['pthread'],
@@ -817,6 +831,9 @@ D8_FLAGS = {
     'os:linux': {
       'LIBS': ['pthread'],
     },
+    'os:qnx': {
+      'LIBS': ['m', 'socket'],
+    },
     'os:macos': {
       'LIBS': ['pthread'],
     },
@@ -969,7 +986,7 @@ PLATFORM_OPTIONS = {
     'help': 'the architecture to build for'
   },
   'os': {
-    'values': ['freebsd', 'linux', 'macos', 'win32', 'openbsd', 'solaris', 'cygwin', 'netbsd'],
+    'values': ['freebsd', 'linux', 'macos', 'win32', 'openbsd', 'solaris', 'cygwin', 'netbsd', 'qnx'],
     'guess': GuessOS,
     'help': 'the os to build for'
   },

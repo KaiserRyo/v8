@@ -1,0 +1,7 @@
+- Added platform implementation for QNX in platform-qnx.cc. The implementation is largely the same as Linux with some compatibility.
+- atomicops_internals_arm_qnx.h was added to enable QNX-specific support for atomic operations on ARM.
+- A change was made in cpu-arm.cc to support proper cache flushing on QNX using msync.
+- platform.h was modified to work around va_list namespacing issues with QNX C++ library.
+- The SConstruct and SConscript files were modified to add support for QNX as an OS option.
+- qnxbuild.sh script was added to simplify setting up the cross-compiler options and invoke the actual build.
+- Added README describing how to build the code.

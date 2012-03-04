@@ -56,6 +56,10 @@ int signbit(double x);
 // Needed for va_list on at least MinGW and Android.
 #include <stdarg.h>
 
+#if defined (__QNXNTO__)
+using std::va_list;
+#endif
+
 #define __GNUC_VERSION__ (__GNUC__ * 10000 + __GNUC_MINOR__ * 100)
 
 #endif  // __GNUC__

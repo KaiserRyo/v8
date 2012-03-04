@@ -222,6 +222,7 @@ SOURCES = {
   'os:freebsd': ['platform-freebsd.cc', 'platform-posix.cc'],
   'os:openbsd': ['platform-openbsd.cc', 'platform-posix.cc'],
   'os:linux':   ['platform-linux.cc', 'platform-posix.cc'],
+  'os:qnx':   ['platform-qnx.cc', 'platform-posix.cc'],
   'os:android': ['platform-linux.cc', 'platform-posix.cc'],
   'os:macos':   ['platform-macos.cc', 'platform-posix.cc'],
   'os:solaris': ['platform-solaris.cc', 'platform-posix.cc'],
@@ -272,6 +273,9 @@ D8_FULL_FILES = {
     'd8.cc', 'd8-debug.cc'
   ],
   'os:linux': [
+    'd8-posix.cc'
+  ],
+  'os:qnx': [
     'd8-posix.cc'
   ],
   'os:macos': [
