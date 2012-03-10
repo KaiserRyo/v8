@@ -69,7 +69,7 @@ void CPU::FlushICache(void* start, size_t size) {
   // around whether or not to generate the code when building snapshots.
   Simulator::FlushICache(Isolate::Current()->simulator_i_cache(), start, size);
 #elif defined(__QNXNTO__)
-  msync(start, size, MS_SYNC|MS_INVALIDATE_ICACHE);
+  msync(start, size, MS_SYNC | MS_INVALIDATE_ICACHE);
 #else
   // Ideally, we would call
   //   syscall(__ARM_NR_cacheflush, start,

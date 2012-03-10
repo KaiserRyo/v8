@@ -68,7 +68,7 @@ Heap::Heap()
     : isolate_(NULL),
 // semispace_size_ should be a power of 2 and old_generation_size_ should be
 // a multiple of Page::kPageSize.
-#if defined(ANDROID)
+#if defined(ANDROID) || defined(__QNXNTO__)
 #define LUMP_OF_MEMORY (128 * KB)
       code_range_size_(0),
 #elif defined(V8_TARGET_ARCH_X64)

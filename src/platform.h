@@ -56,7 +56,7 @@ int signbit(double x);
 // Needed for va_list on at least MinGW and Android.
 #include <stdarg.h>
 
-#if defined (__QNXNTO__)
+#ifdef __QNXNTO__
 using std::va_list;
 #endif
 
