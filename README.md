@@ -16,7 +16,7 @@ The _**v8**_ repository holds the v3.8.9 sources for the open source V8 JavaScri
     ./qnxbuild.sh [arm|ia32] [v8 build options]
 
 
-The qnxbuild.sh script wraps calling scons and sets up cross compilation variables, etc.
+The qnxbuild.sh script wraps calling scons and sets up the cross compilation environment, etc.
 The V8 build options are passed directly to the v8 build.
 
 To build the interactive JS shell executable that can be loaded onto a device for example, type:

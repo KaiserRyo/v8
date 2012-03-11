@@ -5,3 +5,4 @@
 - The SConstruct and SConscript files were modified to add support for QNX as an OS option.
 - qnxbuild.sh script was added to simplify setting up the cross-compiler options and invoke the actual build.
 - Added README describing how to build the code.
+- Reduced memory allocation size for QNX.
