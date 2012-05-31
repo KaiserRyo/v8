@@ -40,12 +40,7 @@ inline Atomic32 NoBarrier_CompareAndSwap(volatile Atomic32* ptr,
                                          Atomic32 old_value,
                                          Atomic32 new_value) {
   Atomic32 prev_value = *ptr;
-  do {
-    if (!_smp_cmpxchg(reinterpret_cast<volatile unsigned*>(ptr), old_value, new_value)) {
-      return old_value;
-    }
-    prev_value = *ptr;
-  } while (prev_value == old_value);
+  _smp_cmpxchg(reinterpret_cast<volatile unsigned*>(ptr), old_value, new_value);
   return prev_value;
 }
 
@@ -54,7 +49,7 @@ inline Atomic32 NoBarrier_AtomicExchange(volatile Atomic32* ptr,
   Atomic32 old_value;
   do {
     old_value = *ptr;
-  } while (_smp_cmpxchg(reinterpret_cast<volatile unsigned*>(ptr), old_value, new_value));
+  } while (!_smp_cmpxchg(reinterpret_cast<volatile unsigned*>(ptr), old_value, new_value));
   return old_value;
 }
 
