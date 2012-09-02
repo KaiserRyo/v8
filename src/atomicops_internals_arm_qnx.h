@@ -36,30 +36,23 @@
 namespace v8 {
 namespace internal {
 
+inline void MemoryBarrier() {
+  __cpu_membarrier();
+}
+
 inline Atomic32 NoBarrier_CompareAndSwap(volatile Atomic32* ptr,
                                          Atomic32 old_value,
                                          Atomic32 new_value) {
-  Atomic32 prev_value = *ptr;
-  _smp_cmpxchg(reinterpret_cast<volatile unsigned*>(ptr), old_value, new_value);
-  return prev_value;
+  return _smp_cmpxchg(reinterpret_cast<volatile unsigned*>(ptr), old_value, new_value);
 }
 
 inline Atomic32 NoBarrier_AtomicExchange(volatile Atomic32* ptr,
                                          Atomic32 new_value) {
-  Atomic32 old_value;
-  do {
-    old_value = *ptr;
-  } while (!_smp_cmpxchg(reinterpret_cast<volatile unsigned*>(ptr), old_value, new_value));
-  return old_value;
+  return _smp_xchg(reinterpret_cast<volatile unsigned*>(ptr), new_value);
 }
 
 inline Atomic32 NoBarrier_AtomicIncrement(volatile Atomic32* ptr,
                                           Atomic32 increment) {
-  return Barrier_AtomicIncrement(ptr, increment);
-}
-
-inline Atomic32 Barrier_AtomicIncrement(volatile Atomic32* ptr,
-                                        Atomic32 increment) {
   for (;;) {
     // Atomic exchange the old value with an incremented one.
     Atomic32 old_value = *ptr;
@@ -70,6 +63,12 @@ inline Atomic32 Barrier_AtomicIncrement(volatile Atomic32* ptr,
     }
     // Otherwise, *ptr changed mid-loop and we need to retry.
   }
+}
+
+inline Atomic32 Barrier_AtomicIncrement(volatile Atomic32* ptr,
+                                        Atomic32 increment) {
+  MemoryBarrier();
+  return NoBarrier_AtomicIncrement(ptr, increment);
 }
 
 inline Atomic32 Acquire_CompareAndSwap(volatile Atomic32* ptr,
@@ -86,10 +85,6 @@ inline Atomic32 Release_CompareAndSwap(volatile Atomic32* ptr,
 
 inline void NoBarrier_Store(volatile Atomic32* ptr, Atomic32 value) {
   *ptr = value;
-}
-
-inline void MemoryBarrier() {
-  __cpu_membarrier();
 }
 
 inline void Acquire_Store(volatile Atomic32* ptr, Atomic32 value) {
@@ -120,4 +115,3 @@ inline Atomic32 Release_Load(volatile const Atomic32* ptr) {
 } }  // namespace v8::internal
 
 #endif  // V8_ATOMICOPS_INTERNALS_ARM_QNX_H_
-
