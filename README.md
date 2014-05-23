@@ -19,7 +19,7 @@ The **v8-3.8.9-qnx** branch holds the previous v3.8.9 sources for QNX and is sti
 
 ### Patching V8
 
-In order to allow cross-compiling, a small patch to add the QNX Makefile needs to be applied. Please download and apply the *qnx-build.patch* above in this repository in the root of your V8 directory:
+In order to allow easy cross-compiling, a small patch to add a Makefile for QNX needs to be applied. Please download and apply the **qnx-build.patch** above in this repository in the root of your V8 directory:
 
     cd $V8_DIR
     git am qnx-build.patch
