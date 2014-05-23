@@ -12,9 +12,17 @@ The **v8-3.8.9-qnx** branch holds the previous v3.8.9 sources for QNX and is sti
 
 ### Prerequisites
 
-* Linux
+* Linux or OS X
 * Python 2.6 or higher
 * BlackBerry NDK or QNX SDP
+
+
+### Patching V8
+
+In order to allow cross-compiling, a small patch to add the QNX Makefile needs to be applied. Please download and apply the *qnx-build.patch* above in this repository in the root of your V8 directory:
+
+    cd $V8_DIR
+    git am qnx-build.patch
 
 
 ### Patching GYP
@@ -27,11 +35,7 @@ The GYP build tool needs to be patched to work with the QNX toolchain. Please do
 
 ### Building For QNX ARM
 
-    export CXX="${QNX_HOST}/usr/bin/qcc -Vgcc_ntoarmv7le_cpp-ne"
-    export LINK="${QNX_HOST}/usr/bin/qcc -Vgcc_ntoarmv7le_cpp-ne"
-    export HOST_OS=`uname -s | sed -e 's/Linux/linux/;s/Darwin/mac/'`
-    export GYP_DEFINES="OS=qnx host_os=${HOST_OS} target_arch=arm v8_target_arch=arm arm_version=7 arm_neon=1"
-    make arm.release -j16
+    make qnx_arm.release -j50
 
 To test, you can then load the d8 binary onto the device and run it.
 

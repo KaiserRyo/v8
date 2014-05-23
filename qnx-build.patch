@@ -1,0 +1,228 @@
+From ec3f4517bd471bb216df9db8a9af95692f89bcd8 Mon Sep 17 00:00:00 2001
+From: Jeff Rogers <jrogers@blackberry.com>
+Date: Thu, 22 May 2014 15:54:16 -0400
+Subject: [PATCH] Add QNX Makefile.
+
+---
+ Makefile     | 40 +++++++++++++++++++++++++--
+ Makefile.qnx | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 126 insertions(+), 3 deletions(-)
+ create mode 100644 Makefile.qnx
+
+diff --git a/Makefile b/Makefile
+index caa9f08..73aaff9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -38,6 +38,7 @@ ANDROID_NDK_HOST_ARCH ?=
+ ANDROID_TOOLCHAIN ?=
+ ANDROID_V8 ?= /data/local/tmp/v8
+ NACL_SDK_ROOT ?=
++QNX_HOST ?=
+ 
+ # Special build flags. Use them like this: "make library=shared"
+ 
+@@ -208,6 +209,7 @@ endif
+ # - any of the above with .check appended, e.g. "ia32.release.check"
+ # - "android": cross-compile for Android/ARM
+ # - "nacl" : cross-compile for Native Client (ia32 and x64)
++# - "qnx" : cross-compile for QNX (ARM and ia32)
+ # - default (no target specified): build all DEFAULT_ARCHES and MODES
+ # - "check": build all targets and run all tests
+ # - "<arch>.clean" for any <arch> in ARCHES
+@@ -223,6 +225,7 @@ MODES = release debug optdebug
+ DEFAULT_MODES = release debug
+ ANDROID_ARCHES = android_ia32 android_arm android_arm64 android_mipsel
+ NACL_ARCHES = nacl_ia32 nacl_x64
++QNX_ARCHES = qnx_arm qnx_ia32
+ 
+ # List of files that trigger Makefile regeneration:
+ GYPFILES = build/all.gyp build/features.gypi build/standalone.gypi \
+@@ -239,11 +242,14 @@ ANDROID_BUILDS = $(foreach mode,$(MODES), \
+                    $(addsuffix .$(mode),$(ANDROID_ARCHES)))
+ NACL_BUILDS = $(foreach mode,$(MODES), \
+                    $(addsuffix .$(mode),$(NACL_ARCHES)))
++QNX_BUILDS = $(foreach mode,$(MODES), \
++                   $(addsuffix .$(mode),$(QNX_ARCHES)))
+ # Generates corresponding test targets, e.g. "ia32.release.check".
+ CHECKS = $(addsuffix .check,$(BUILDS))
+ QUICKCHECKS = $(addsuffix .quickcheck,$(BUILDS))
+ ANDROID_CHECKS = $(addsuffix .check,$(ANDROID_BUILDS))
+ NACL_CHECKS = $(addsuffix .check,$(NACL_BUILDS))
++QNX_CHECKS = $(addsuffix .check,$(QNX_BUILDS))
+ # File where previously used GYPFLAGS are stored.
+ ENVFILE = $(OUTDIR)/environment
+ 
+@@ -255,7 +261,9 @@ ENVFILE = $(OUTDIR)/environment
+         $(ANDROID_ARCHES) $(ANDROID_BUILDS) $(ANDROID_CHECKS) \
+         must-set-ANDROID_NDK_ROOT_OR_TOOLCHAIN \
+         $(NACL_ARCHES) $(NACL_BUILDS) $(NACL_CHECKS) \
+-        must-set-NACL_SDK_ROOT
++        must-set-NACL_SDK_ROOT \
++        $(QNX_ARCHES) $(QNX_BUILDS) $(QNX_CHECKS) \
++        must-set-QNX_HOST
+ 
+ # Target definitions. "all" is the default.
+ all: $(DEFAULT_MODES)
+@@ -306,6 +314,16 @@ $(NACL_BUILDS): $(GYPFILES) $(ENVFILE) \
+ 	        OUTDIR="$(OUTDIR)" \
+ 	        GYPFLAGS="$(GYPFLAGS)"
+ 
++$(QNX_ARCHES): $(addprefix $$@.,$(MODES))
++
++$(QNX_BUILDS): $(GYPFILES) $(ENVFILE) \
++		   Makefile.qnx must-set-QNX_HOST
++	@$(MAKE) -f Makefile.qnx $@ \
++	        ARCH="$(basename $@)" \
++	        MODE="$(subst .,,$(suffix $@))" \
++	        OUTDIR="$(OUTDIR)" \
++	        GYPFLAGS="$(GYPFLAGS)"
++
+ # Test targets.
+ check: all
+ 	@tools/run-tests.py $(TESTJOBS) --outdir=$(OUTDIR) \
+@@ -358,6 +376,15 @@ $(addsuffix .check, $(NACL_BUILDS)): $$(basename $$@)
+ $(addsuffix .check, $(NACL_ARCHES)): \
+                 $(addprefix $$(basename $$@).,$(MODES)).check
+ 
++$(addsuffix .check, $(QNX_BUILDS)): $$(basename $$@)
++	@tools/run-tests.py $(TESTJOBS) --outdir=$(OUTDIR) \
++	     --arch-and-mode=$(basename $@) \
++	     --timeout=600 --nopresubmit --noi18n \
++	     --command-prefix="tools/qnx-run.py"
++
++$(addsuffix .check, $(QNX_ARCHES)): \
++                $(addprefix $$(basename $$@).,$(MODES)).check
++
+ native.check: native
+ 	@tools/run-tests.py $(TESTJOBS) --outdir=$(OUTDIR)/native \
+ 	    --arch-and-mode=. $(TESTFLAGS)
+@@ -378,7 +405,7 @@ quickcheck: $(subst $(COMMA),$(SPACE),$(FASTCOMPILEMODES))
+ qc: quickcheck
+ 
+ # Clean targets. You can clean each architecture individually, or everything.
+-$(addsuffix .clean, $(ARCHES) $(ANDROID_ARCHES) $(NACL_ARCHES)):
++$(addsuffix .clean, $(ARCHES) $(ANDROID_ARCHES) $(NACL_ARCHES) $(QNX_ARCHES)):
+ 	rm -f $(OUTDIR)/Makefile.$(basename $@)*
+ 	rm -rf $(OUTDIR)/$(basename $@).release
+ 	rm -rf $(OUTDIR)/$(basename $@).debug
+@@ -390,7 +417,7 @@ native.clean:
+ 	rm -rf $(OUTDIR)/native
+ 	find $(OUTDIR) -regex '.*\(host\|target\)\.native\.mk' -delete
+ 
+-clean: $(addsuffix .clean, $(ARCHES) $(ANDROID_ARCHES) $(NACL_ARCHES)) native.clean gtags.clean
++clean: $(addsuffix .clean, $(ARCHES) $(ANDROID_ARCHES) $(NACL_ARCHES) $(QNX_ARCHES)) native.clean gtags.clean
+ 
+ # GYP file generation targets.
+ OUT_MAKEFILES = $(addprefix $(OUTDIR)/Makefile.,$(BUILDS))
+@@ -430,6 +457,13 @@ ifndef NACL_SDK_ROOT
+ 	  $(error NACL_SDK_ROOT must be set)
+ endif
+ 
++# Note that QNX_HOST must be set to point to an appropriate
++# QNX host SDK before using this makefile.
++must-set-QNX_HOST:
++ifndef QNX_HOST
++	  $(error QNX_HOST must be set)
++endif
++
+ # Replaces the old with the new environment file if they're different, which
+ # will trigger GYP to regenerate Makefiles.
+ $(ENVFILE): $(ENVFILE).new
+diff --git a/Makefile.qnx b/Makefile.qnx
+new file mode 100644
+index 0000000..e4b692a
+--- /dev/null
++++ b/Makefile.qnx
+@@ -0,0 +1,89 @@
++#
++# Copyright 2014 the V8 project authors. All rights reserved.
++# Redistribution and use in source and binary forms, with or without
++# modification, are permitted provided that the following conditions are
++# met:
++#
++#     * Redistributions of source code must retain the above copyright
++#       notice, this list of conditions and the following disclaimer.
++#     * Redistributions in binary form must reproduce the above
++#       copyright notice, this list of conditions and the following
++#       disclaimer in the documentation and/or other materials provided
++#       with the distribution.
++#     * Neither the name of Google Inc. nor the names of its
++#       contributors may be used to endorse or promote products derived
++#       from this software without specific prior written permission.
++#
++# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++# Those definitions should be consistent with the main Makefile
++QNX_ARCHES = qnx_arm qnx_ia32
++MODES = release debug
++
++# Generates all combinations of QNX ARCHES and MODES,
++# e.g. "qnx_arm.release" or "qnx_ia32.release"
++QNX_BUILDS = $(foreach mode,$(MODES), \
++                   $(addsuffix .$(mode),$(QNX_ARCHES)))
++
++HOST_OS = $(shell uname -s | sed -e 's/Linux/linux/;s/Darwin/mac/')
++
++ifeq ($(ARCH), qnx_arm)
++  DEFINES = target_arch=arm v8_target_arch=arm arm_version=7 arm_neon=1
++  QNX_CC = "$(QNX_HOST)/usr/bin/qcc -Vgcc_ntoarmv7le_cpp-ne"
++  QNX_CXX = "$(QNX_HOST)/usr/bin/qcc -Vgcc_ntoarmv7le_cpp-ne"
++  QNX_LINK = "$(QNX_HOST)/usr/bin/qcc -Vgcc_ntoarmv7le_cpp-ne"
++  QNX_LD = "$(QNX_HOST)/usr/bin/ntoarmv7-ld"
++  QNX_AR = "$(QNX_HOST)/usr/bin/ntoarmv7-ar"
++  QNX_RANLIB = "$(QNX_HOST)/usr/bin/ntoarmv7-ranlib"
++else
++  ifeq ($(ARCH), qnx_ia32)
++    DEFINES = target_arch=ia32 v8_target_arch=ia32
++    QNX_CC = "$(QNX_HOST)/usr/bin/qcc -Vgcc_ntox86_cpp-ne"
++    QNX_CXX = "$(QNX_HOST)/usr/bin/qcc -Vgcc_ntox86_cpp-ne"
++    QNX_LINK = "$(QNX_HOST)/usr/bin/qcc -Vgcc_ntox86_cpp-ne"
++    QNX_LD = "$(QNX_HOST)/usr/bin/ntox86-ld"
++    QNX_AR = "$(QNX_HOST)/usr/bin/ntox86-ar"
++    QNX_RANLIB = "$(QNX_HOST)/usr/bin/ntox86-ranlib"
++  else
++    $(error Target architecture "${ARCH}" is not supported)
++  endif
++endif
++
++# For mksnapshot host generation.
++DEFINES += host_os=${HOST_OS}
++
++.SECONDEXPANSION:
++# For some reason the $$(basename $$@) expansion didn't work here...
++$(QNX_BUILDS): $(OUTDIR)/Makefile.$$@
++	@$(MAKE) -C "$(OUTDIR)" -f Makefile.$@ \
++              CXX=${QNX_CXX} \
++              LINK=${QNX_LINK} \
++              LD=${QNX_LD} \
++              LDFLAGS="-lcpp-ne" \
++              AR=${QNX_AR} \
++              RANLIB=${QNX_RANLIB} \
++              BUILDTYPE=$(shell echo $(subst .,,$(suffix $@)) | \
++                          python -c "print raw_input().capitalize()") \
++              builddir="$(shell pwd)/$(OUTDIR)/$@"
++
++# QNX GYP file generation targets.
++QNX_MAKEFILES = $(addprefix $(OUTDIR)/Makefile.,$(QNX_BUILDS))
++$(QNX_MAKEFILES):
++	GYP_GENERATORS=make-qnx \
++	GYP_DEFINES="${DEFINES}" \
++	CC=${QNX_CC} \
++	CXX=${QNX_CXX} \
++	PYTHONPATH="$(shell pwd)/tools/generate_shim_headers:$(PYTHONPATH)" \
++	build/gyp/gyp --generator-output="${OUTDIR}" build/all.gyp \
++	              -Ibuild/standalone.gypi --depth=. \
++	              -S$(suffix $(basename $@))$(suffix $@) ${GYPFLAGS}
+-- 
+1.9.3
+
